@@ -29,8 +29,8 @@ def test_dockerfile_bundles_default_alphasift_adapter() -> None:
     requirements = (REPO_ROOT / "requirements.txt").read_text(encoding="utf-8")
 
     assert "git \\" in dockerfile
-    assert "git+https://github.com/ZhuLinsen/alphasift.git@377049857cc04175dc3cca62121ee41adec6cdb8#egg=alphasift" in requirements
-    assert "pip install --no-cache-dir -r requirements.txt" in dockerfile
+    assert "alphasift @ https://codeload.github.com/ZhuLinsen/alphasift/tar.gz/377049857cc04175dc3cca62121ee41adec6cdb8" in requirements
+    assert "pip install --no-cache-dir --timeout 120 --retries 5 -i https://mirrors.tencent.com/pypi/simple -r requirements.txt" in dockerfile
     assert "import alphasift.dsa_adapter" in dockerfile
 
 
@@ -58,6 +58,22 @@ def test_docker_compose_injects_env_without_single_file_env_mount() -> None:
     assert "../.env:/app/.env" not in common["volumes"]
     assert not any(str(volume).startswith("../.env:") for volume in common["volumes"])
     assert "../longbridge_tokens:/home/dsa/.longbridge" in common["volumes"]
+
+
+def test_docker_compose_runs_private_searxng_for_news_search() -> None:
+    compose_text = (REPO_ROOT / "docker" / "docker-compose.yml").read_text(encoding="utf-8")
+    compose = yaml.safe_load(compose_text)
+    services = compose["services"]
+    searxng = services["searxng"]
+
+    assert searxng["image"] == "docker.io/searxng/searxng:latest"
+    assert "ports" not in searxng
+    assert "./searxng:/etc/searxng:ro" in searxng["volumes"]
+    assert "searxng-cache:/var/cache/searxng" in searxng["volumes"]
+    assert any("SEARXNG_SECRET=" in item for item in searxng["environment"])
+    assert "searxng" in services["server"]["depends_on"]
+    assert "searxng" in services["analyzer"]["depends_on"]
+    assert "searxng-cache" in compose["volumes"]
 
 
 def test_docker_guides_do_not_recommend_single_file_env_bind_mount() -> None:

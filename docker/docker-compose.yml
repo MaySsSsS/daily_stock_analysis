@@ -56,16 +56,53 @@ x-common: &common
         memory: 256M
 
 services:
+  # 私有 SearXNG 搜索服务，仅供本 Compose 内部访问，不暴露公网端口。
+  searxng:
+    image: docker.io/searxng/searxng:latest
+    container_name: stock-searxng
+    restart: unless-stopped
+    environment:
+      - "SEARXNG_SECRET=${SEARXNG_SECRET:?Set SEARXNG_SECRET in .env with: openssl rand -hex 32}"
+      - SEARXNG_BASE_URL=http://searxng:8080/
+      - SEARXNG_BIND_ADDRESS=0.0.0.0
+      - SEARXNG_PORT=8080
+    volumes:
+      - ./searxng:/etc/searxng:ro
+      - searxng-cache:/var/cache/searxng
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   # 定时任务模式
   analyzer:
     <<: *common
     container_name: stock-analyzer
+    depends_on:
+      - searxng
 
   # FastAPI 模式
   server:
     <<: *common
     container_name: stock-server
+    depends_on:
+      - searxng
     command: ["python", "main.py", "--serve-only", "--host", "0.0.0.0", "--port", "${API_PORT:-8000}"]
     # 若使用 network_mode: host，则以下 ports 映射无效，端口由 command 中的 --port 指定
     ports:
       - "${API_PORT:-8000}:${API_PORT:-8000}"
+
+  web:
+    image: nginx:1.27-alpine
+    container_name: stock-web
+    depends_on:
+      - server
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  searxng-cache:

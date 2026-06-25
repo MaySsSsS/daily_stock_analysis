@@ -69,6 +69,9 @@ def _get_credential_path() -> Path:
 def _is_auth_enabled_from_env() -> bool:
     """Read ADMIN_AUTH_ENABLED from .env file."""
     _ensure_env_loaded()
+    env_override = (os.getenv("ADMIN_AUTH_ENABLED") or "").strip().lower()
+    if env_override:
+        return env_override in ("true", "1", "yes")
     env_file = os.getenv("ENV_FILE")
     env_path = Path(env_file) if env_file else Path(__file__).resolve().parent.parent / ".env"
     if not env_path.exists():

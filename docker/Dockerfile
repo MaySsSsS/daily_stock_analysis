@@ -23,6 +23,9 @@ WORKDIR /app
 ENV TZ=Asia/Shanghai
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
+# 在国内云服务器上首次构建时，官方 Debian 源可能很慢，切到腾讯云镜像加速依赖安装。
+RUN sed -i 's|deb.debian.org|mirrors.tencent.com|g' /etc/apt/sources.list.d/debian.sources
+
 # 安装系统依赖（wkhtmltopdf 含 wkhtmltoimage，用于 Markdown 转图片 Issue #289）
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
@@ -43,8 +46,8 @@ RUN groupadd -g 1000 dsa && \
 # 复制依赖文件
 COPY requirements.txt .
 
-# 安装 Python 依赖
-RUN pip install --no-cache-dir -r requirements.txt
+# 安装 Python 依赖（国内云服务器默认 PyPI 可能较慢，使用腾讯云镜像并放宽下载超时）
+RUN pip install --no-cache-dir --timeout 120 --retries 5 -i https://mirrors.tencent.com/pypi/simple -r requirements.txt
 
 # 复制应用代码
 COPY *.py ./

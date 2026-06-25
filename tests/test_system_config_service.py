@@ -782,7 +782,7 @@ class SystemConfigServiceTestCase(unittest.TestCase):
             "LLM_OPENAI_MODELS=openai/gpt-4o-mini,openai/gpt-4o",
             "LITELLM_FALLBACK_MODELS=openai/gpt-4o-mini,openai/gpt-4o",
             "ALPHASIFT_ENABLED=false",
-            "ALPHASIFT_INSTALL_SPEC=git+https://github.com/ZhuLinsen/alphasift.git@377049857cc04175dc3cca62121ee41adec6cdb8",
+            "ALPHASIFT_INSTALL_SPEC=alphasift @ https://codeload.github.com/ZhuLinsen/alphasift/tar.gz/377049857cc04175dc3cca62121ee41adec6cdb8",
             "LLM_USAGE_HMAC_SECRET=telemetry-secret",
             "LLM_USAGE_HMAC_KEY_VERSION=test-v1",
             "GEMINI_API_KEY=legacy-secret",
@@ -809,7 +809,7 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         self.assertEqual(current_map["ALPHASIFT_ENABLED"], "true")
         self.assertEqual(
             current_map["ALPHASIFT_INSTALL_SPEC"],
-            "git+https://github.com/ZhuLinsen/alphasift.git@377049857cc04175dc3cca62121ee41adec6cdb8",
+            "alphasift @ https://codeload.github.com/ZhuLinsen/alphasift/tar.gz/377049857cc04175dc3cca62121ee41adec6cdb8",
         )
         self.assertEqual(current_map["LLM_USAGE_HMAC_SECRET"], "telemetry-secret")
         self.assertEqual(current_map["LLM_USAGE_HMAC_KEY_VERSION"], "test-v1")
