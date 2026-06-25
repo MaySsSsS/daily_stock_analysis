@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [新功能] #1595 P1.5 新增 Provider Cache Capability Registry，按 provider、api surface、gateway 和 verification status 建模 prompt cache 能力，未知 OpenAI-compatible route 默认 telemetry only。
 - [改进] #1595 P1 新增 prompt cache telemetry / analysis-path hints / diagnostics 最小配置，默认不改变 provider 请求 shape，并复用 LLM usage HMAC secret 做 domain-separated cache hint 派生。
 - [chore] Docker Compose 新增私有 SearXNG 服务与 JSON 输出配置，支持服务器内网自建搜索供新闻检索使用。
+- [修复] 自建 SearXNG 启动时将 `SEARXNG_OUTGOING_PROXY` 或现有 `http_proxy/https_proxy` 注入 `outgoing.proxies`，避免容器内仅有代理环境变量但 SearXNG 网络层未实际使用。
 - [chore] Docker 构建切换腾讯云 apt/PyPI 镜像并增加 pip 超时与重试，提升个人云服务器重建稳定性。
 - [修复] 管理员登录开关优先读取运行时 `ADMIN_AUTH_ENABLED` 环境变量，避免 Docker 环境变量被 `.env` 文件读取路径覆盖。
 - [chore] AlphaSift 固定依赖来源改为 PEP 508 direct URL，并同步默认配置、文档和测试断言。

@@ -66,6 +66,32 @@ services:
     restart: unless-stopped
     env_file:
       - ../.env
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        python - <<'PY'
+        import os
+        from pathlib import Path
+
+        template = Path("/etc/searxng/settings.yml").read_text(encoding="utf-8").rstrip() + "\n"
+        proxy = (
+            os.environ.get("SEARXNG_OUTGOING_PROXY")
+            or os.environ.get("https_proxy")
+            or os.environ.get("HTTPS_PROXY")
+            or os.environ.get("http_proxy")
+            or os.environ.get("HTTP_PROXY")
+            or ""
+        ).strip()
+
+        lines = [template, "outgoing:", "  request_timeout: 10.0", "  max_request_timeout: 20.0"]
+        if proxy:
+            lines.append(f"  proxies: {proxy}")
+
+        Path("/tmp/searxng-settings.yml").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        PY
+        export SEARXNG_SETTINGS_PATH=/tmp/searxng-settings.yml
+        exec /usr/local/searxng/entrypoint.sh
     environment:
       - SEARXNG_BASE_URL=http://searxng:8080/
       - SEARXNG_BIND_ADDRESS=0.0.0.0

@@ -225,7 +225,11 @@ SearXNG 是独立容器，不是合并到股票项目镜像里。它不开放公
 SEARXNG_BASE_URLS=http://searxng:8080
 SEARXNG_PUBLIC_INSTANCES_ENABLED=false
 SEARXNG_SECRET=<执行 openssl rand -hex 32 生成>
+# 如服务器已有可用外网代理/VPN 出口，建议显式传给 SearXNG：
+# SEARXNG_OUTGOING_PROXY=http://172.18.0.1:7890
 ```
+
+`docker/docker-compose.yml` 会在 `searxng` 容器启动时，把 `SEARXNG_OUTGOING_PROXY`（若未设置则回退到 `http_proxy` / `https_proxy`）写入 SearXNG 的 `outgoing.proxies`，这样股票项目继续沿用现有 `SearXNGSearchProvider` 调用方式，不需要改项目代码。
 
 首次生成密钥：
 

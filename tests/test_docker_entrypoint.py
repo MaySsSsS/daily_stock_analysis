@@ -71,6 +71,9 @@ def test_docker_compose_runs_private_searxng_for_news_search() -> None:
     assert searxng["image"] == "docker.io/searxng/searxng:latest"
     assert "ports" not in searxng
     assert "../.env" in searxng["env_file"]
+    assert searxng["entrypoint"][0] == "/bin/sh"
+    assert "SEARXNG_SETTINGS_PATH=/tmp/searxng-settings.yml" in searxng["entrypoint"][2]
+    assert "SEARXNG_OUTGOING_PROXY" in searxng["entrypoint"][2]
     assert "./searxng:/etc/searxng:ro" in searxng["volumes"]
     assert "searxng-cache:/var/cache/searxng" in searxng["volumes"]
     assert "searxng" in services["server"]["depends_on"]
