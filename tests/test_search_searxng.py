@@ -124,26 +124,6 @@ class TestSearXNGSearchProvider(unittest.TestCase):
         self.assertEqual(resp.results[0].snippet, "Desc text")
 
     @patch("src.search_service._get_with_retry")
-    def test_self_hosted_extracts_embedded_date_when_published_date_missing(self, mock_get):
-        mock_get.return_value = self._response(
-            json_payload={
-                "results": [
-                    {
-                        "title": "2026.6.25,贵州茅台(600519),价值投资交易记录",
-                        "url": "https://example.com/maotai",
-                        "content": "Summary snippet here",
-                    }
-                ]
-            }
-        )
-
-        provider = self._create_provider(["https://searx.example.org"])
-        resp = provider.search("贵州茅台 600519 最新消息", max_results=5)
-
-        self.assertTrue(resp.success)
-        self.assertEqual(resp.results[0].published_date, "2026-06-25")
-
-    @patch("src.search_service._get_with_retry")
     def test_self_hosted_403_returns_specific_error(self, mock_get):
         mock_get.return_value = self._response(
             status_code=403,
@@ -186,23 +166,20 @@ class TestSearXNGSearchProvider(unittest.TestCase):
         self.assertEqual(resp.results[0].title, "Valid")
 
     @patch("src.search_service._get_with_retry")
-    def test_searxng_search_avoids_engine_category_and_time_range_filters(self, mock_get):
+    def test_time_range_mapping(self, mock_get):
         mock_get.return_value = self._response(json_payload={"results": []})
         provider = self._create_provider(["https://searx.example.org"])
 
-        provider.search("query", max_results=5, days=7)
-
-        self.assertNotIn("categories", mock_get.call_args[1]["params"])
-        self.assertNotIn("time_range", mock_get.call_args[1]["params"])
-
-    @patch("src.search_service._get_with_retry")
-    def test_searxng_search_uses_concise_chinese_news_query(self, mock_get):
-        mock_get.return_value = self._response(json_payload={"results": []})
-        provider = self._create_provider(["https://searx.example.org"])
-
-        provider.search("贵州茅台 600519 股票 最新消息", max_results=5)
-
-        self.assertEqual(mock_get.call_args[1]["params"]["q"], "贵州茅台 600519 最新消息")
+        cases = [
+            (1, "day"),
+            (7, "week"),
+            (30, "month"),
+            (31, "year"),
+        ]
+        for days, expected in cases:
+            with self.subTest(days=days):
+                provider.search("query", max_results=5, days=days)
+                self.assertEqual(mock_get.call_args[1]["params"]["time_range"], expected)
 
     @patch("src.search_service._get_with_retry")
     def test_non_json_response_returns_failure(self, mock_get):

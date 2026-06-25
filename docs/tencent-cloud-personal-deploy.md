@@ -219,8 +219,6 @@ docker compose -f docker/docker-compose.yml ps
 
 SearXNG 是独立容器，不是合并到股票项目镜像里。它不开放公网端口，只通过 Docker 内网服务名 `searxng` 给 `stock-server` 和 `stock-analyzer` 访问。
 
-仓库内 `docker/searxng/settings.yml` 默认只保留适合当前个人云服务器环境的 `360search`、`sogou`、`sogou wechat` 和 `bing news`，并启用 `json` 输出。这样股票项目沿用现有 `SearXNGSearchProvider`，不需要再配置付费搜索 API Key。
-
 服务器 `.env` 需要保留：
 
 ```env

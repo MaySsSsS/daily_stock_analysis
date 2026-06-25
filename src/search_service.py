@@ -1757,6 +1757,16 @@ class SearXNGSearchProvider(BaseSearchProvider):
             body = raw_text if isinstance(raw_text, str) else ""
             return f"HTTP {response.status_code}: {body[:200]}"
 
+    @staticmethod
+    def _time_range(days: int) -> str:
+        if days <= 1:
+            return "day"
+        if days <= 7:
+            return "week"
+        if days <= 30:
+            return "month"
+        return "year"
+
     @classmethod
     def _search_latency_seconds(cls, instance_data: Dict[str, Any]) -> float:
         timing = (instance_data.get("timing") or {}).get("search") or {}
@@ -1895,8 +1905,9 @@ class SearXNGSearchProvider(BaseSearchProvider):
                 "(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
             }
             params = {
-                "q": self._normalize_news_query(query),
+                "q": query,
                 "format": "json",
+                "time_range": self._time_range(days),
                 "pageno": 1,
             }
 
@@ -1959,8 +1970,6 @@ class SearXNGSearchProvider(BaseSearchProvider):
                         published_date = dt.strftime("%Y-%m-%d")
                     except (ValueError, AttributeError):
                         published_date = raw_published_date
-                if not published_date:
-                    published_date = self._extract_embedded_date(item.get("title"), snippet)
 
                 results.append(
                     SearchResult(
@@ -2012,35 +2021,6 @@ class SearXNGSearchProvider(BaseSearchProvider):
             return domain or "未知来源"
         except Exception:
             return "未知来源"
-
-    @staticmethod
-    def _extract_embedded_date(*values: Any) -> Optional[str]:
-        """Extract an explicit YYYY-M-D style date from SearXNG title/snippet text."""
-        for value in values:
-            text = str(value or "").strip()
-            if not text:
-                continue
-            match = re.search(
-                r"(\d{4})\s*[年/\-.]\s*(\d{1,2})\s*[月/\-.]\s*(\d{1,2})\s*日?",
-                text,
-            )
-            if not match:
-                continue
-            try:
-                return date(
-                    int(match.group(1)),
-                    int(match.group(2)),
-                    int(match.group(3)),
-                ).isoformat()
-            except ValueError:
-                continue
-        return None
-
-    @staticmethod
-    def _normalize_news_query(query: str) -> str:
-        """Use a concise news query for SearXNG engines that are sensitive to extra stock terms."""
-        normalized = re.sub(r"\s+股票\s+最新消息", " 最新消息", query or "").strip()
-        return normalized or query
 
     def search(self, query: str, max_results: int = 5, days: int = 7) -> SearchResponse:
         """Execute SearXNG search with instance rotation and per-request failover."""
