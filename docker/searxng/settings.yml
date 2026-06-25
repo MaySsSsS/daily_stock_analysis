@@ -1,4 +1,10 @@
-use_default_settings: true
+use_default_settings:
+  engines:
+    keep_only:
+      - 360search
+      - sogou
+      - sogou wechat
+      - bing news
 
 general:
   instance_name: "Daily Stock Analysis Search"
@@ -8,6 +14,28 @@ search:
   formats:
     - html
     - json
+
+outgoing:
+  request_timeout: 10.0
+  max_request_timeout: 20.0
+
+engines:
+  - name: 360search
+    disabled: false
+    timeout: 10.0
+
+  - name: sogou
+    disabled: false
+    timeout: 10.0
+
+  - name: sogou wechat
+    disabled: false
+    timeout: 10.0
+
+  - name: bing news
+    disabled: false
+    base_url: https://cn.bing.com
+    timeout: 10.0
 
 server:
   secret_key: "$SEARXNG_SECRET"

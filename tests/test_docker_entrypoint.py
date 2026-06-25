@@ -78,6 +78,28 @@ def test_docker_compose_runs_private_searxng_for_news_search() -> None:
     assert "searxng-cache" in compose["volumes"]
 
 
+def test_private_searxng_settings_enable_json_and_stable_engines() -> None:
+    settings = yaml.safe_load(
+        (REPO_ROOT / "docker" / "searxng" / "settings.yml").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert "json" in settings["search"]["formats"]
+    assert settings["use_default_settings"]["engines"]["keep_only"] == [
+        "360search",
+        "sogou",
+        "sogou wechat",
+        "bing news",
+    ]
+    assert settings["outgoing"]["request_timeout"] == 10.0
+    enabled_engines = {engine["name"]: engine for engine in settings["engines"]}
+    assert enabled_engines["360search"]["disabled"] is False
+    assert enabled_engines["sogou"]["disabled"] is False
+    assert enabled_engines["sogou wechat"]["disabled"] is False
+    assert enabled_engines["bing news"]["base_url"] == "https://cn.bing.com"
+
+
 def test_docker_guides_do_not_recommend_single_file_env_bind_mount() -> None:
     forbidden_mount_patterns = [
         r"\$\(pwd\)/\.env:/app/\.env",
