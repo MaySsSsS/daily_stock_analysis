@@ -166,29 +166,14 @@ class TestSearXNGSearchProvider(unittest.TestCase):
         self.assertEqual(resp.results[0].title, "Valid")
 
     @patch("src.search_service._get_with_retry")
-    def test_time_range_mapping(self, mock_get):
+    def test_searxng_search_requests_news_category_without_engine_time_range(self, mock_get):
         mock_get.return_value = self._response(json_payload={"results": []})
         provider = self._create_provider(["https://searx.example.org"])
 
-        cases = [
-            (1, "day"),
-            (7, "week"),
-            (30, "month"),
-            (31, "year"),
-        ]
-        for days, expected in cases:
-            with self.subTest(days=days):
-                provider.search("query", max_results=5, days=days)
-                self.assertEqual(mock_get.call_args[1]["params"]["time_range"], expected)
-
-    @patch("src.search_service._get_with_retry")
-    def test_searxng_search_requests_news_category(self, mock_get):
-        mock_get.return_value = self._response(json_payload={"results": []})
-        provider = self._create_provider(["https://searx.example.org"])
-
-        provider.search("query", max_results=5)
+        provider.search("query", max_results=5, days=7)
 
         self.assertEqual(mock_get.call_args[1]["params"]["categories"], "news")
+        self.assertNotIn("time_range", mock_get.call_args[1]["params"])
 
     @patch("src.search_service._get_with_retry")
     def test_non_json_response_returns_failure(self, mock_get):

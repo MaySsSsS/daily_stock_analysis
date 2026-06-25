@@ -1757,16 +1757,6 @@ class SearXNGSearchProvider(BaseSearchProvider):
             body = raw_text if isinstance(raw_text, str) else ""
             return f"HTTP {response.status_code}: {body[:200]}"
 
-    @staticmethod
-    def _time_range(days: int) -> str:
-        if days <= 1:
-            return "day"
-        if days <= 7:
-            return "week"
-        if days <= 30:
-            return "month"
-        return "year"
-
     @classmethod
     def _search_latency_seconds(cls, instance_data: Dict[str, Any]) -> float:
         timing = (instance_data.get("timing") or {}).get("search") or {}
@@ -1908,7 +1898,6 @@ class SearXNGSearchProvider(BaseSearchProvider):
                 "q": query,
                 "format": "json",
                 "categories": "news",
-                "time_range": self._time_range(days),
                 "pageno": 1,
             }
 
