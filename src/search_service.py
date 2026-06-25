@@ -1895,7 +1895,7 @@ class SearXNGSearchProvider(BaseSearchProvider):
                 "(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
             }
             params = {
-                "q": query,
+                "q": self._normalize_news_query(query),
                 "format": "json",
                 "categories": "news",
                 "pageno": 1,
@@ -2036,6 +2036,12 @@ class SearXNGSearchProvider(BaseSearchProvider):
             except ValueError:
                 continue
         return None
+
+    @staticmethod
+    def _normalize_news_query(query: str) -> str:
+        """Use a concise news query for SearXNG engines that are sensitive to extra stock terms."""
+        normalized = re.sub(r"\s+股票\s+最新消息", " 最新消息", query or "").strip()
+        return normalized or query
 
     def search(self, query: str, max_results: int = 5, days: int = 7) -> SearchResponse:
         """Execute SearXNG search with instance rotation and per-request failover."""
