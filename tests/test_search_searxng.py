@@ -124,6 +124,26 @@ class TestSearXNGSearchProvider(unittest.TestCase):
         self.assertEqual(resp.results[0].snippet, "Desc text")
 
     @patch("src.search_service._get_with_retry")
+    def test_self_hosted_extracts_embedded_date_when_published_date_missing(self, mock_get):
+        mock_get.return_value = self._response(
+            json_payload={
+                "results": [
+                    {
+                        "title": "2026.6.25,贵州茅台(600519),价值投资交易记录",
+                        "url": "https://example.com/maotai",
+                        "content": "Summary snippet here",
+                    }
+                ]
+            }
+        )
+
+        provider = self._create_provider(["https://searx.example.org"])
+        resp = provider.search("贵州茅台 600519 最新消息", max_results=5)
+
+        self.assertTrue(resp.success)
+        self.assertEqual(resp.results[0].published_date, "2026-06-25")
+
+    @patch("src.search_service._get_with_retry")
     def test_self_hosted_403_returns_specific_error(self, mock_get):
         mock_get.return_value = self._response(
             status_code=403,
