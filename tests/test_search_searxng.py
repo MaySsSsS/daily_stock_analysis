@@ -182,6 +182,15 @@ class TestSearXNGSearchProvider(unittest.TestCase):
                 self.assertEqual(mock_get.call_args[1]["params"]["time_range"], expected)
 
     @patch("src.search_service._get_with_retry")
+    def test_searxng_search_requests_news_category(self, mock_get):
+        mock_get.return_value = self._response(json_payload={"results": []})
+        provider = self._create_provider(["https://searx.example.org"])
+
+        provider.search("query", max_results=5)
+
+        self.assertEqual(mock_get.call_args[1]["params"]["categories"], "news")
+
+    @patch("src.search_service._get_with_retry")
     def test_non_json_response_returns_failure(self, mock_get):
         mock_get.return_value = self._response(json_side_effect=ValueError("No JSON"))
 

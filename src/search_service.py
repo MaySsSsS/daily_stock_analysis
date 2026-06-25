@@ -1907,6 +1907,7 @@ class SearXNGSearchProvider(BaseSearchProvider):
             params = {
                 "q": query,
                 "format": "json",
+                "categories": "news",
                 "time_range": self._time_range(days),
                 "pageno": 1,
             }
