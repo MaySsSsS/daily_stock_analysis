@@ -1897,7 +1897,6 @@ class SearXNGSearchProvider(BaseSearchProvider):
             params = {
                 "q": self._normalize_news_query(query),
                 "format": "json",
-                "categories": "news",
                 "pageno": 1,
             }
 

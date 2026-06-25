@@ -186,13 +186,13 @@ class TestSearXNGSearchProvider(unittest.TestCase):
         self.assertEqual(resp.results[0].title, "Valid")
 
     @patch("src.search_service._get_with_retry")
-    def test_searxng_search_requests_news_category_without_engine_time_range(self, mock_get):
+    def test_searxng_search_avoids_engine_category_and_time_range_filters(self, mock_get):
         mock_get.return_value = self._response(json_payload={"results": []})
         provider = self._create_provider(["https://searx.example.org"])
 
         provider.search("query", max_results=5, days=7)
 
-        self.assertEqual(mock_get.call_args[1]["params"]["categories"], "news")
+        self.assertNotIn("categories", mock_get.call_args[1]["params"])
         self.assertNotIn("time_range", mock_get.call_args[1]["params"])
 
     @patch("src.search_service._get_with_retry")
