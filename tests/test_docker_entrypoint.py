@@ -93,6 +93,14 @@ def test_private_searxng_settings_enable_json_for_existing_provider() -> None:
     assert settings["server"]["public_instance"] is False
 
 
+def test_nginx_uses_docker_dns_for_server_upstream() -> None:
+    nginx_conf = (REPO_ROOT / "docker" / "nginx.conf").read_text(encoding="utf-8")
+
+    assert "resolver 127.0.0.11" in nginx_conf
+    assert "set $upstream http://server:8000;" in nginx_conf
+    assert "proxy_pass $upstream;" in nginx_conf
+
+
 def test_docker_guides_do_not_recommend_single_file_env_bind_mount() -> None:
     forbidden_mount_patterns = [
         r"\$\(pwd\)/\.env:/app/\.env",
