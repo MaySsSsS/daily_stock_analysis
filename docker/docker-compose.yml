@@ -54,9 +54,9 @@ x-common: &common
   deploy:
     resources:
       limits:
-        memory: 512M
+        memory: 1G
       reservations:
-        memory: 256M
+        memory: 512M
 
 services:
   # 私有 SearXNG 搜索服务，仅供本 Compose 内部访问，不暴露公网端口。

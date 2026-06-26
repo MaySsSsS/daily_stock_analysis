@@ -244,6 +244,8 @@ docker compose -f docker/docker-compose.yml ps
 docker compose -f docker/docker-compose.yml logs --tail=100 searxng
 ```
 
+当前仓库默认把 `server` 和 `analyzer` 容器内存上限设为 `1G`，用于避免 Web/API 在线分析时因 `512M` 余量过小而被 OOM 杀掉；若你的机器规格明显更小，再按实际内存回调。
+
 从股票项目容器内验证 SearXNG JSON 搜索：
 
 ```bash

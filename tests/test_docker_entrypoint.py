@@ -60,6 +60,8 @@ def test_docker_compose_injects_env_without_single_file_env_mount() -> None:
     assert "../longbridge_tokens:/home/dsa/.longbridge" in common["volumes"]
     assert any(str(item).startswith("NO_PROXY=") and "searxng" in str(item) for item in common["environment"])
     assert any(str(item).startswith("no_proxy=") and "searxng" in str(item) for item in common["environment"])
+    assert common["deploy"]["resources"]["limits"]["memory"] == "1G"
+    assert common["deploy"]["resources"]["reservations"]["memory"] == "512M"
 
 
 def test_docker_compose_runs_private_searxng_for_news_search() -> None:
