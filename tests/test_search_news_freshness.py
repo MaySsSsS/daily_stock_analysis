@@ -558,6 +558,39 @@ class SearchNewsFreshnessTestCase(unittest.TestCase):
 
         self.assertEqual([item.title for item in resp.results], ["贵州茅台获机构维持买入评级"])
 
+    def test_search_stock_news_filters_stock_portal_aggregation_pages(self) -> None:
+        """Aggregated stock portal pages should not pass just because snippet mentions the target stock."""
+        fresh = datetime.now().date().isoformat()
+        service, _ = self._create_service_with_mock_provider(
+            news_max_age_days=3,
+            news_strategy_profile="short",
+            response=_response(
+                [
+                    _result(
+                        "新乡化纤7.24(--%)_个股资讯 - 新浪",
+                        fresh,
+                        snippet="1 day ago · 贵州茅台 -- -- 诉讼仲裁 违规记录 ・ 7.24 涨停:7.96 跌停:6.52 ・ 风险,投资需谨慎。",
+                        url="https://vip.stock.finance.sina.com.cn/corp/go.php/vCB_AllNewsStock/symbol/sz000949.phtml",
+                        source="vip.stock.finance.sina.com.cn",
+                    ),
+                    _result(
+                        "贵州茅台遭遇渠道价格波动，机构提示关注风险",
+                        fresh,
+                        snippet="分析师提示需继续关注渠道价格与需求修复节奏。",
+                        url="https://news.example.invalid/moutai-risk",
+                        source="news.example.invalid",
+                    ),
+                ]
+            ),
+        )
+
+        resp = service.search_stock_news("600519", "贵州茅台", max_results=2)
+
+        self.assertEqual(
+            [item.title for item in resp.results],
+            ["贵州茅台遭遇渠道价格波动，机构提示关注风险"],
+        )
+
     def test_non_etf_risk_check_drops_zero_relevance_fillers(self) -> None:
         """Strict risk_check should prefer empty over unrelated filler."""
         fresh_dt = datetime.now(timezone.utc).replace(microsecond=0)

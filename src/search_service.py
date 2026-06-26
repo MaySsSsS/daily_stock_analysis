@@ -2263,8 +2263,8 @@ class SearchService:
         "股价和资讯", "google 财经", "行情中心", "实时行情", "当日成交明细",
         "成交明细", "分时", "走势图", "公司概况", "公司简介", "股本结构",
         "管理层", "经营情况简介", "持仓明细", "流通股本", "基金持仓",
-        "限售解禁表", "quote", "quotes", "chart", "charts", "historical data",
-        "tradedetail", "technical analysis",
+        "限售解禁表", "个股资讯", "涨停", "跌停", "投资需谨慎", "quote", "quotes",
+        "chart", "charts", "historical data", "tradedetail", "technical analysis",
     )
     _NON_NEWS_FINANCE_NAVIGATION_TERMS = (
         "新闻资讯", "公司公告", "公司概况", "公司简介", "股本结构", "管理层",
@@ -2274,6 +2274,7 @@ class SearchService:
     _NON_NEWS_FINANCE_URL_RE = re.compile(
         r"(?:/finance/quote/|/quotes_service/|/vms_tradedetail|/historical-data|"
         r"/tradedetail|/chart(?:s)?(?:/|$)|/cjmx\.shtml(?:\?|$)|/index\.shtml(?:\?|$)|"
+        r"/go\.php/vcb_allnewsstock/|/go\.php/vcb_allbulletin/|"
         r"[?&]symbol=(?:sh|sz)\d{6}\b)",
         re.IGNORECASE,
     )
