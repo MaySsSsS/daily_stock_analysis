@@ -645,6 +645,41 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
         self.assertEqual(config.stock_list, ["600519", "000001"])
 
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_proxy_env_auto_appends_domestic_no_proxy_domains(
+        self,
+        _mock_parse_yaml,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            env_path = Path(temp_dir) / ".env"
+            env_path.write_text("LOG_LEVEL=INFO\n", encoding="utf-8")
+
+            with patch.dict(
+                os.environ,
+                {
+                    "ENV_FILE": str(env_path),
+                    "HTTP_PROXY": "http://127.0.0.1:7890",
+                    "HTTPS_PROXY": "http://127.0.0.1:7890",
+                    "NO_PROXY": "localhost,127.0.0.1,searxng",
+                },
+                clear=True,
+            ):
+                Config._instance = None
+                Config._load_from_env()
+                no_proxy = os.environ.get("NO_PROXY", "")
+
+        for expected in (
+            "push2his.eastmoney.com",
+            "push2.eastmoney.com",
+            "anonflow2.eastmoney.com",
+            "fund.eastmoney.com",
+            "qt.gtimg.cn",
+            "hq.sinajs.cn",
+            "api.tushare.pro",
+            "searxng",
+        ):
+            self.assertIn(expected, no_proxy)
+
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
     def test_custom_webhook_template_unescapes_compose_saved_placeholders(
         self,
         _mock_parse_yaml,

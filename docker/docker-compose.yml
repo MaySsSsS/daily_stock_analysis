@@ -38,9 +38,9 @@ x-common: &common
     # Web/API service bind address (must be 0.0.0.0 inside container)
     - WEBUI_HOST=0.0.0.0
     # API_PORT 从 .env 文件读取，无需在此硬编码
-    # Docker 内网服务名必须绕过宿主/环境代理，否则 server -> searxng 会被代理误转发。
-    - NO_PROXY=localhost,127.0.0.1,searxng,stock-searxng,server,stock-server,analyzer,stock-analyzer,web,stock-web
-    - no_proxy=localhost,127.0.0.1,searxng,stock-searxng,server,stock-server,analyzer,stock-analyzer,web,stock-web
+    # Docker 内网服务名与国内财经数据源默认走直连，避免 server -> searxng 或东财/腾讯/新浪链路被代理误转发。
+    - NO_PROXY=localhost,127.0.0.1,searxng,stock-searxng,server,stock-server,analyzer,stock-analyzer,web,stock-web,eastmoney.com,.eastmoney.com,push2.eastmoney.com,push2his.eastmoney.com,anonflow2.eastmoney.com,fund.eastmoney.com,sina.com.cn,.sina.com.cn,hq.sinajs.cn,163.com,.163.com,tushare.pro,api.tushare.pro,baostock.com,sse.com.cn,szse.cn,csindex.com.cn,cninfo.com.cn,qt.gtimg.cn,sqt.gtimg.cn,ifzq.gtimg.cn
+    - no_proxy=localhost,127.0.0.1,searxng,stock-searxng,server,stock-server,analyzer,stock-analyzer,web,stock-web,eastmoney.com,.eastmoney.com,push2.eastmoney.com,push2his.eastmoney.com,anonflow2.eastmoney.com,fund.eastmoney.com,sina.com.cn,.sina.com.cn,hq.sinajs.cn,163.com,.163.com,tushare.pro,api.tushare.pro,baostock.com,sse.com.cn,szse.cn,csindex.com.cn,cninfo.com.cn,qt.gtimg.cn,sqt.gtimg.cn,ifzq.gtimg.cn
 
     # 代理设置（如果需要）
     # - http_proxy=http://host.docker.internal:10809

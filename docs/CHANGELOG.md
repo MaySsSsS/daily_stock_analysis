@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [改进] #1595 P1 新增 prompt cache telemetry / analysis-path hints / diagnostics 最小配置，默认不改变 provider 请求 shape，并复用 LLM usage HMAC secret 做 domain-separated cache hint 派生。
 - [chore] Docker Compose 新增私有 SearXNG 服务与 JSON 输出配置，支持服务器内网自建搜索供新闻检索使用。
 - [修复] 自建 SearXNG 启动时将 `SEARXNG_OUTGOING_PROXY` 或现有 `http_proxy/https_proxy` 注入 `outgoing.proxies`，避免容器内仅有代理环境变量但 SearXNG 网络层未实际使用。
+- [修复] Docker 部署默认将东财、腾讯财经、新浪财经、Tushare 等国内数据源加入 `NO_PROXY` 白名单，避免筹码、行情、板块等本应直连的链路被全局代理误转发。
+- [修复] 国内数据源直连白名单补充 `hq.sinajs.cn` 与 `api.tushare.pro`，避免新浪实时行情和 Tushare Pro API 仍误走全局代理。
 - [修复] SearXNG 新闻结果缺少 `publishedDate` 时，改为从摘要中的相对时间/日期提示提取发布时间，避免有效新闻在时效过滤阶段被整批丢弃。
 - [修复] Nginx 反向代理改为通过 Docker DNS 动态解析 `server` 上游，避免 `server` 容器重建换 IP 后 Web 首页偶发 `502 Bad Gateway`。
 - [修复] Docker Compose 将 `server` / `analyzer` 默认内存上限提升到 `1G`，避免线上 Web/API 分析阶段因 `512M` 余量过小被 OOM 杀掉。

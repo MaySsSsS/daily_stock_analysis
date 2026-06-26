@@ -1185,6 +1185,7 @@ PUSHOVER_API_TOKEN=your_api_token
 1. 在 `.env` 中设置 `ENABLE_EASTMONEY_PATCH=true`
 2. 将 `MAX_WORKERS=1` 降低并发
 3. 若已配置 Tushare，可优先使用 Tushare 数据源
+4. 若容器配置了全局代理，请确保 `push2his.eastmoney.com`、`push2.eastmoney.com`、`anonflow2.eastmoney.com`、`qt.gtimg.cn`、`hq.sinajs.cn`、`api.tushare.pro` 等国内数据源在 `NO_PROXY` / `no_proxy` 白名单中走直连
 
 ---
 

@@ -1141,17 +1141,29 @@ class Config:
         if http_proxy:
             # 国内金融数据源域名列表
             domestic_domains = [
-                'eastmoney.com',   # 东方财富 (Efinance/Akshare)
-                'sina.com.cn',     # 新浪财经 (Akshare)
-                '163.com',         # 网易财经 (Akshare)
-                'tushare.pro',     # Tushare
-                'baostock.com',    # Baostock
-                'sse.com.cn',      # 上交所
-                'szse.cn',         # 深交所
-                'csindex.com.cn',  # 中证指数
-                'cninfo.com.cn',   # 巨潮资讯
+                'eastmoney.com',           # 东方财富根域名
+                '.eastmoney.com',          # 东方财富子域名
+                'push2.eastmoney.com',     # 东方财富行情/板块接口
+                'push2his.eastmoney.com',  # 东方财富历史K线/筹码接口
+                'anonflow2.eastmoney.com', # 东方财富东财补丁授权接口
+                'fund.eastmoney.com',      # 东方财富基金/补丁覆盖域名
+                'sina.com.cn',             # 新浪财经根域名
+                '.sina.com.cn',            # 新浪财经子域名
+                'hq.sinajs.cn',            # 新浪财经实时行情接口
+                '163.com',                 # 网易财经根域名
+                '.163.com',                # 网易财经子域名
+                'tushare.pro',             # Tushare
+                'api.tushare.pro',         # Tushare Pro API
+                'baostock.com',            # Baostock
+                'sse.com.cn',              # 上交所
+                'szse.cn',                 # 深交所
+                'csindex.com.cn',          # 中证指数
+                'cninfo.com.cn',           # 巨潮资讯
+                'qt.gtimg.cn',             # 腾讯财经实时行情
+                'sqt.gtimg.cn',            # 腾讯财经备用行情
+                'ifzq.gtimg.cn',           # 腾讯财经指标/分时接口
                 'localhost',
-                '127.0.0.1'
+                '127.0.0.1',
             ]
 
             # 获取现有的 no_proxy

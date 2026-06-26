@@ -231,6 +231,8 @@ SEARXNG_SECRET=<执行 openssl rand -hex 32 生成>
 
 `docker/docker-compose.yml` 会在 `searxng` 容器启动时，把 `SEARXNG_OUTGOING_PROXY`（若未设置则回退到 `http_proxy` / `https_proxy`）写入 SearXNG 的 `outgoing.proxies`，这样股票项目继续沿用现有 `SearXNGSearchProvider` 调用方式，不需要改项目代码。
 
+同时，`server` / `analyzer` 容器默认会把 Docker 内网服务名和国内财经数据源域名加入 `NO_PROXY` / `no_proxy`，例如 `searxng`、`push2his.eastmoney.com`、`push2.eastmoney.com`、`qt.gtimg.cn`、`hq.sinajs.cn`、`api.tushare.pro` 等，避免这些本应直连的链路被宿主代理/VPN 误转发。需要外网代理的 LLM、海外搜索等能力仍继续使用 `HTTP_PROXY` / `HTTPS_PROXY`。
+
 首次生成密钥：
 
 ```bash
