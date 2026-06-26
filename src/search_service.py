@@ -1799,6 +1799,11 @@ class SearXNGSearchProvider(BaseSearchProvider):
             r"\b\d{4}[/-]\d{1,2}[/-]\d{1,2}\b",
             r"\b\d{4}\.\d{1,2}\.\d{1,2}\b",
             r"\d{4}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日?",
+            r"\b\d{1,2}\s+(?:jan|january|feb|february|mar|march|apr|april|may|jun|june|"
+            r"jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)\s+\d{4}\b",
+            r"\b(?:jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|"
+            r"aug|august|sep|sept|september|oct|october|nov|november|dec|december)\s+"
+            r"\d{1,2},\s*\d{4}\b",
         )
         for pattern in patterns:
             match = re.search(pattern, text, flags=re.IGNORECASE)
@@ -2252,6 +2257,28 @@ class SearchService:
     _LOW_QUALITY_URL_RE = re.compile(
         r"(?:^|[/_.=-])(?:download|downloads|apk|ipa|exe|dmg|installer|"
         r"software|soft|game|games|app|apps|package)(?:$|[/_.?&=-])",
+        re.IGNORECASE,
+    )
+    _NON_NEWS_FINANCE_PAGE_TERMS = (
+        "股价和资讯", "google 财经", "行情中心", "实时行情", "当日成交明细",
+        "成交明细", "分时", "走势图", "公司概况", "公司简介", "股本结构",
+        "管理层", "经营情况简介", "持仓明细", "流通股本", "基金持仓",
+        "限售解禁表", "quote", "quotes", "chart", "charts", "historical data",
+        "tradedetail", "technical analysis",
+    )
+    _NON_NEWS_FINANCE_NAVIGATION_TERMS = (
+        "新闻资讯", "公司公告", "公司概况", "公司简介", "股本结构", "管理层",
+        "经营情况简介", "重大事件备忘", "分红送配记录", "持仓明细", "主要股东",
+        "流通股本", "基金持仓", "限售解禁表",
+    )
+    _NON_NEWS_FINANCE_URL_RE = re.compile(
+        r"(?:/finance/quote/|/quotes_service/|/vms_tradedetail|/historical-data|"
+        r"/tradedetail|/chart(?:s)?(?:/|$)|/cjmx\.shtml(?:\?|$)|/index\.shtml(?:\?|$)|"
+        r"[?&]symbol=(?:sh|sz)\d{6}\b)",
+        re.IGNORECASE,
+    )
+    _LIVE_QUOTE_TITLE_RE = re.compile(
+        r"[:：]\s*\d[\d.,]*\s+[+-]?\d[\d.,]*%\s+[+-]?\d[\d.,]*",
         re.IGNORECASE,
     )
     _BUSINESS_APP_METRIC_RE = re.compile(
@@ -2929,6 +2956,38 @@ class SearchService:
         )
 
     @classmethod
+    def _has_non_news_finance_page_signal(cls, item: SearchResult) -> bool:
+        """Detect quote/chart/detail pages that are finance tools, not actual news articles."""
+        content_text = " ".join(filter(None, [item.title, item.snippet, item.source])).lower()
+        parsed_url = urlparse(item.url or "")
+        url_surface = unquote(
+            " ".join(filter(None, [parsed_url.netloc, parsed_url.path, parsed_url.query]))
+        ).lower()
+
+        has_url_signal = bool(cls._NON_NEWS_FINANCE_URL_RE.search(url_surface))
+        term_hits = sum(
+            1
+            for term in cls._NON_NEWS_FINANCE_PAGE_TERMS
+            if cls._contains_any_low_quality_news_term(content_text, (term,))
+        )
+        nav_hits = sum(
+            1
+            for term in cls._NON_NEWS_FINANCE_NAVIGATION_TERMS
+            if term.lower() in content_text
+        )
+        has_live_quote_title = bool(cls._LIVE_QUOTE_TITLE_RE.search(item.title or ""))
+        has_company_event = cls._contains_any_news_term(
+            " ".join(filter(None, [item.title, item.snippet, item.url, item.source])),
+            cls._COMPANY_EVENT_TERMS,
+        )
+
+        if has_url_signal and (has_live_quote_title or nav_hits >= 2 or term_hits >= 2):
+            return True
+        if has_live_quote_title and nav_hits >= 1:
+            return True
+        return has_url_signal and term_hits >= 1 and not has_company_event
+
+    @classmethod
     def _has_adult_service_spam_news_page_signal(cls, item: SearchResult) -> bool:
         """Detect adult-service spam by content signals instead of domain names."""
         combined_text = " ".join(
@@ -3191,6 +3250,7 @@ class SearchService:
         response: SearchResponse,
         *,
         log_scope: str,
+        allow_zero_relevance_fallback: bool = True,
     ) -> SearchResponse:
         """Drop obvious non-news pages and zero-relevance fillers from ranked results."""
         if not response.success or not response.results:
@@ -3198,6 +3258,7 @@ class SearchService:
 
         candidates: List[SearchResult] = []
         dropped_low_quality = 0
+        dropped_non_news_finance = 0
         dropped_adult_spam = 0
         dropped_zero_relevance = 0
 
@@ -3208,6 +3269,12 @@ class SearchService:
                 and cls._has_low_quality_news_page_signal(item)
             ):
                 dropped_low_quality += 1
+                continue
+            if (
+                not is_official_source
+                and cls._has_non_news_finance_page_signal(item)
+            ):
+                dropped_non_news_finance += 1
                 continue
             if (
                 not is_official_source
@@ -3226,18 +3293,27 @@ class SearchService:
         if meaningful_candidates:
             dropped_zero_relevance = len(candidates) - len(meaningful_candidates)
             filtered_results = meaningful_candidates
-        else:
+        elif allow_zero_relevance_fallback:
             filtered_results = candidates
+        else:
+            dropped_zero_relevance = len(candidates)
+            filtered_results = []
 
-        if dropped_low_quality or dropped_adult_spam or dropped_zero_relevance:
+        if (
+            dropped_low_quality
+            or dropped_non_news_finance
+            or dropped_adult_spam
+            or dropped_zero_relevance
+        ):
             logger.info(
                 "[新闻准入] %s: provider=%s, total=%s, kept=%s, "
-                "drop_low_quality=%s, drop_adult_spam=%s, drop_zero_relevance=%s",
+                "drop_low_quality=%s, drop_non_news_finance=%s, drop_adult_spam=%s, drop_zero_relevance=%s",
                 log_scope,
                 response.provider,
                 len(response.results),
                 len(filtered_results),
                 dropped_low_quality,
+                dropped_non_news_finance,
                 dropped_adult_spam,
                 dropped_zero_relevance,
             )
@@ -3656,13 +3732,13 @@ class SearchService:
             # 如果提供了关键词，直接使用关键词作为查询
             query = " ".join(focus_keywords)
         elif prefer_chinese:
-            query = f"{stock_name} {stock_code} 股票 最新消息"
+            query = f"{stock_name} {stock_code} 最新 新闻 公告 重大 事件"
         elif is_foreign:
             # 港股/美股使用英文搜索关键词
-            query = f"{stock_name} {stock_code} stock latest news"
+            query = f"{stock_name} {stock_code} latest news filing announcement"
         else:
             # 默认主查询：股票名称 + 核心关键词
-            query = f"{stock_name} {stock_code} 股票 最新消息"
+            query = f"{stock_name} {stock_code} 最新 新闻 公告 重大 事件"
 
         logger.info(
             (
@@ -4190,6 +4266,9 @@ class SearchService:
             filtered_response = self._filter_ranked_news_for_context(
                 filtered_response,
                 log_scope=f"{stock_code}:{provider.name}:{dim['name']}:admission",
+                allow_zero_relevance_fallback=not (
+                    dim['name'] == 'risk_check' and dim.get('strict_freshness', False)
+                ),
             )
             filtered_response = self._limit_search_response(
                 filtered_response,

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [修复] SearXNG 新闻结果缺少 `publishedDate` 时，改为从摘要中的相对时间/日期提示提取发布时间，避免有效新闻在时效过滤阶段被整批丢弃。
 - [修复] Nginx 反向代理改为通过 Docker DNS 动态解析 `server` 上游，避免 `server` 容器重建换 IP 后 Web 首页偶发 `502 Bad Gateway`。
 - [修复] Docker Compose 将 `server` / `analyzer` 默认内存上限提升到 `1G`，避免线上 Web/API 分析阶段因 `512M` 余量过小被 OOM 杀掉。
+- [修复] 新闻搜索补充英文绝对日期提取，并过滤行情页/走势图/成交明细等非新闻金融页面，减少旧闻与不相关新闻混入分析结果。
 - [chore] Docker 构建切换腾讯云 apt/PyPI 镜像并增加 pip 超时与重试，提升个人云服务器重建稳定性。
 - [修复] 管理员登录开关优先读取运行时 `ADMIN_AUTH_ENABLED` 环境变量，避免 Docker 环境变量被 `.env` 文件读取路径覆盖。
 - [chore] AlphaSift 固定依赖来源改为 PEP 508 direct URL，并同步默认配置、文档和测试断言。

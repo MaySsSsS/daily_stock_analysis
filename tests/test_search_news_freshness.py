@@ -528,6 +528,69 @@ class SearchNewsFreshnessTestCase(unittest.TestCase):
         self.assertEqual([item.title for item in resp.results], ["腾讯控股 00700 早盘走强"])
         self.assertEqual(resp.results[0].relevance_category, "direct_company_news")
 
+    def test_search_stock_news_filters_non_news_finance_pages(self) -> None:
+        """Quote/chart/detail pages should not crowd out actual news articles."""
+        fresh = datetime.now().date().isoformat()
+        service, _ = self._create_service_with_mock_provider(
+            news_max_age_days=3,
+            news_strategy_profile="short",
+            response=_response(
+                [
+                    _result(
+                        "贵州茅台:1241.41 2.17% +26.41 600519 搜狐证券",
+                        fresh,
+                        snippet="8 hours ago · 新闻资讯. 公司公告. 公司概况. 公司简介 · 股本结构 · 管理层 · 经营情况简介 · 重大事件备忘 · 分红送配记录.",
+                        url="https://q.stock.sohu.com/cn/600519/index.shtml?555",
+                        source="q.stock.sohu.com",
+                    ),
+                    _result(
+                        "贵州茅台获机构维持买入评级",
+                        fresh,
+                        snippet="贵州茅台公告后，多家机构更新评级与目标价。",
+                        url="https://news.example.invalid/moutai-rating",
+                        source="news.example.invalid",
+                    ),
+                ]
+            ),
+        )
+
+        resp = service.search_stock_news("600519", "贵州茅台", max_results=2)
+
+        self.assertEqual([item.title for item in resp.results], ["贵州茅台获机构维持买入评级"])
+
+    def test_non_etf_risk_check_drops_zero_relevance_fillers(self) -> None:
+        """Strict risk_check should prefer empty over unrelated filler."""
+        fresh_dt = datetime.now(timezone.utc).replace(microsecond=0)
+        fresh = fresh_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+        service, mock_search = self._create_service_with_mock_provider(
+            news_max_age_days=3,
+            news_strategy_profile="short",
+        )
+        mock_search.side_effect = [
+            _response([_result("latest_news", fresh)]),
+            _response([_result("market_analysis", None)]),
+            _response(
+                [
+                    _result(
+                        "欢瑞世纪立案或与会计差错有关",
+                        fresh,
+                        snippet="公司涉嫌信息披露违法违规，被证监会立案调查。",
+                        url="https://finance.example.invalid/hrsj-rights",
+                        source="finance.example.invalid",
+                    )
+                ]
+            ),
+        ]
+
+        with patch("src.search_service.time.sleep"):
+            intel = service.search_comprehensive_intel(
+                stock_code="600519",
+                stock_name="贵州茅台",
+                max_searches=3,
+            )
+
+        self.assertEqual(intel["risk_check"].results, [])
+
     def test_download_like_news_without_size_or_url_hints_is_filtered(self) -> None:
         """Content-only Android/download signals should still trigger low-quality filtering."""
         fresh = datetime.now().date().isoformat()
