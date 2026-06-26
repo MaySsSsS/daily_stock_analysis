@@ -2063,6 +2063,36 @@ class DatabaseManager(metaclass=_DatabaseManagerMeta):
 
             return list(results)
 
+    def get_recent_chip_distribution_snapshot(
+        self,
+        code: str,
+        *,
+        days: int = 7,
+        limit: int = 20,
+        exclude_query_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Return the latest persisted chip_distribution_raw snapshot for a stock."""
+        from src.utils.data_processing import parse_json_field
+
+        records = self.get_analysis_history(
+            code=code,
+            days=days,
+            limit=limit,
+            exclude_query_id=exclude_query_id,
+        )
+        for record in records:
+            snapshot = parse_json_field(getattr(record, "context_snapshot", None))
+            if not isinstance(snapshot, dict):
+                continue
+            chip = snapshot.get("chip_distribution_raw")
+            if isinstance(chip, dict) and chip:
+                payload = dict(chip)
+                if getattr(record, "created_at", None) is not None:
+                    payload.setdefault("snapshot_created_at", record.created_at.isoformat())
+                payload.setdefault("analysis_query_id", getattr(record, "query_id", None))
+                return payload
+        return None
+
     def get_latest_analysis_history_id(
         self,
         *,

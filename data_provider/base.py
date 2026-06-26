@@ -19,7 +19,7 @@ import random
 import time
 from threading import BoundedSemaphore, RLock, Thread
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Callable, Optional, List, Tuple, Dict, Any
 
 import pandas as pd
@@ -227,6 +227,63 @@ def _is_meaningful_chip_distribution(chip: Any) -> bool:
             or (concentration_70 is not None and concentration_70 >= 0)
         )
     )
+
+
+def _build_chip_distribution_from_snapshot(chip_snapshot: Any) -> Optional["ChipDistribution"]:
+    if not isinstance(chip_snapshot, dict):
+        return None
+    from .realtime_types import ChipDistribution
+
+    chip = ChipDistribution(
+        code=str(chip_snapshot.get("code") or ""),
+        date=str(chip_snapshot.get("date") or ""),
+        source=str(chip_snapshot.get("source") or "history_snapshot"),
+        profit_ratio=_coerce_chip_metric(chip_snapshot.get("profit_ratio")) or 0.0,
+        avg_cost=_coerce_chip_metric(chip_snapshot.get("avg_cost")) or 0.0,
+        cost_90_low=_coerce_chip_metric(chip_snapshot.get("cost_90_low")) or 0.0,
+        cost_90_high=_coerce_chip_metric(chip_snapshot.get("cost_90_high")) or 0.0,
+        concentration_90=_coerce_chip_metric(chip_snapshot.get("concentration_90")) or 0.0,
+        cost_70_low=_coerce_chip_metric(chip_snapshot.get("cost_70_low")) or 0.0,
+        cost_70_high=_coerce_chip_metric(chip_snapshot.get("cost_70_high")) or 0.0,
+        concentration_70=_coerce_chip_metric(chip_snapshot.get("concentration_70")) or 0.0,
+    )
+    return chip if _is_meaningful_chip_distribution(chip) else None
+
+
+def _is_recent_chip_snapshot_date(
+    chip_date_text: str,
+    stock_code: str,
+    *,
+    max_trading_days: int = 3,
+) -> bool:
+    try:
+        chip_date = datetime.strptime(chip_date_text, "%Y-%m-%d").date()
+    except ValueError:
+        return False
+
+    try:
+        from src.core.trading_calendar import (
+            _XCALS_AVAILABLE,
+            MARKET_EXCHANGE,
+            get_effective_trading_date,
+            get_market_for_stock,
+            get_market_now,
+            xcals,
+        )
+
+        market = get_market_for_stock(stock_code)
+        market_now = get_market_now(market)
+        effective_date = get_effective_trading_date(market, current_time=market_now)
+        if chip_date > effective_date:
+            return False
+        if not _XCALS_AVAILABLE or not market or market not in MARKET_EXCHANGE:
+            return (effective_date - chip_date).days <= max_trading_days
+
+        cal = xcals.get_calendar(MARKET_EXCHANGE[market])
+        sessions = cal.sessions_in_range(pd.Timestamp(chip_date), pd.Timestamp(effective_date))
+        return len(sessions) <= max_trading_days
+    except Exception:
+        return (date.today() - chip_date).days <= max_trading_days
 
 
 def _market_tag(code: str) -> str:
@@ -2043,6 +2100,7 @@ class DataFetcherManager:
 
         from .realtime_types import get_chip_circuit_breaker
         from src.config import get_config
+        from src.storage import DatabaseManager
 
         config = get_config()
 
@@ -2132,6 +2190,30 @@ class DataFetcherManager:
                 logger.warning(f"[筹码分布] {fetcher_name} 获取 {stock_code} 失败: {e}")
                 circuit_breaker.record_failure(source_key, str(e))
                 continue
+
+        cached_chip = None
+        try:
+            snapshot = DatabaseManager.get_instance().get_recent_chip_distribution_snapshot(
+                stock_code,
+                days=7,
+                limit=20,
+            )
+            cached_chip = _build_chip_distribution_from_snapshot(snapshot)
+        except Exception as e:
+            logger.debug(f"[筹码分布] 读取历史筹码快照失败 {stock_code}: {e}")
+
+        if cached_chip and cached_chip.date and _is_recent_chip_snapshot_date(
+            cached_chip.date,
+            stock_code,
+            max_trading_days=3,
+        ):
+            cached_chip.source = "history_snapshot"
+            logger.info(
+                "[筹码分布] %s 使用最近成功快照兜底: date=%s",
+                stock_code,
+                cached_chip.date,
+            )
+            return cached_chip
 
         logger.warning(f"[筹码分布] {stock_code} 所有数据源均失败")
         return None

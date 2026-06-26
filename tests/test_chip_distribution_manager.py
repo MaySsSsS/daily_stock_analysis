@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Regression tests for chip distribution provider fallback."""
 
+from datetime import datetime
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -155,3 +156,58 @@ def test_manager_records_failed_chip_attempt_and_falls_back_to_next_fetcher():
         "provider_run_started",
         "provider_run",
     ]
+
+
+def test_manager_uses_recent_chip_snapshot_when_all_fetchers_fail():
+    get_chip_circuit_breaker().reset()
+    failing_fetcher = _FailingChipFetcher("FailingFetcher", 0, RuntimeError("temporary chip failure"))
+    manager = DataFetcherManager(fetchers=[failing_fetcher])
+    cached_snapshot = {
+        "code": "600519",
+        "date": datetime.now().date().isoformat(),
+        "source": "akshare",
+        "profit_ratio": 0.58,
+        "avg_cost": 100.5,
+        "cost_90_low": 95.0,
+        "cost_90_high": 108.0,
+        "concentration_90": 0.12,
+        "cost_70_low": 97.0,
+        "cost_70_high": 105.0,
+        "concentration_70": 0.08,
+    }
+
+    with patch("src.config.get_config", return_value=SimpleNamespace(enable_chip_distribution=True)):
+        with patch("src.storage.DatabaseManager.get_instance") as mock_db:
+            mock_db.return_value.get_recent_chip_distribution_snapshot.return_value = cached_snapshot
+            chip = manager.get_chip_distribution("600519")
+
+    assert chip is not None
+    assert chip.source == "history_snapshot"
+    assert chip.date == cached_snapshot["date"]
+    assert chip.avg_cost == cached_snapshot["avg_cost"]
+
+
+def test_manager_ignores_stale_chip_snapshot_when_all_fetchers_fail():
+    get_chip_circuit_breaker().reset()
+    failing_fetcher = _FailingChipFetcher("FailingFetcher", 0, RuntimeError("temporary chip failure"))
+    manager = DataFetcherManager(fetchers=[failing_fetcher])
+    stale_snapshot = {
+        "code": "600519",
+        "date": "2026-01-01",
+        "source": "akshare",
+        "profit_ratio": 0.58,
+        "avg_cost": 100.5,
+        "cost_90_low": 95.0,
+        "cost_90_high": 108.0,
+        "concentration_90": 0.12,
+        "cost_70_low": 97.0,
+        "cost_70_high": 105.0,
+        "concentration_70": 0.08,
+    }
+
+    with patch("src.config.get_config", return_value=SimpleNamespace(enable_chip_distribution=True)):
+        with patch("src.storage.DatabaseManager.get_instance") as mock_db:
+            mock_db.return_value.get_recent_chip_distribution_snapshot.return_value = stale_snapshot
+            chip = manager.get_chip_distribution("600519")
+
+    assert chip is None
