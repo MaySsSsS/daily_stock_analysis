@@ -1767,6 +1767,61 @@ class SearXNGSearchProvider(BaseSearchProvider):
             return "month"
         return "year"
 
+    @staticmethod
+    def _normalize_raw_published_date(value: Any) -> Optional[str]:
+        """Convert raw provider date values into a string usable by downstream filters."""
+        if value is None:
+            return None
+
+        raw = str(value).strip()
+        if not raw:
+            return None
+
+        try:
+            dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            return dt.strftime("%Y-%m-%d")
+        except (ValueError, AttributeError):
+            return raw
+
+    @classmethod
+    def _extract_inline_date_hint(cls, value: Any) -> Optional[str]:
+        """Extract a relative/absolute date hint from snippet-like text."""
+        if value is None:
+            return None
+
+        text = str(value).strip()
+        if not text:
+            return None
+
+        patterns = (
+            r"\b\d+\s*(?:minute|minutes|min|mins|hour|hours|day|days|week|weeks|month|months|year|years)\s*ago\b",
+            r"(?:今天|今日|刚刚|昨天|前天|\d+\s*(?:分钟|小时|天|周|个月|月|年)\s*前)",
+            r"\b\d{4}[/-]\d{1,2}[/-]\d{1,2}\b",
+            r"\b\d{4}\.\d{1,2}\.\d{1,2}\b",
+            r"\d{4}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日?",
+        )
+        for pattern in patterns:
+            match = re.search(pattern, text, flags=re.IGNORECASE)
+            if match:
+                return match.group(0).strip()
+        return None
+
+    @classmethod
+    def _resolve_published_date(cls, item: Dict[str, Any]) -> Optional[str]:
+        """Resolve a usable published date from SearXNG JSON fields."""
+        for field in ("publishedDate", "published_date", "date", "pubDate"):
+            normalized = cls._normalize_raw_published_date(item.get(field))
+            if normalized:
+                return normalized
+
+        for field in ("content", "description", "title"):
+            hint = cls._extract_inline_date_hint(item.get(field))
+            normalized = cls._normalize_raw_published_date(hint)
+            if normalized:
+                return normalized
+
+        return None
+
     @classmethod
     def _search_latency_seconds(cls, instance_data: Dict[str, Any]) -> float:
         timing = (instance_data.get("timing") or {}).get("search") or {}
@@ -1960,16 +2015,9 @@ class SearXNGSearchProvider(BaseSearchProvider):
                 url_val = item.get("url")
                 if not url_val:
                     continue
-                raw_published_date = item.get("publishedDate")
 
                 snippet = (item.get("content") or item.get("description") or "")[:500]
-                published_date = None
-                if raw_published_date:
-                    try:
-                        dt = datetime.fromisoformat(raw_published_date.replace("Z", "+00:00"))
-                        published_date = dt.strftime("%Y-%m-%d")
-                    except (ValueError, AttributeError):
-                        published_date = raw_published_date
+                published_date = self._resolve_published_date(item)
 
                 results.append(
                     SearchResult(

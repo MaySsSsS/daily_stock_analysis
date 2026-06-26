@@ -124,6 +124,26 @@ class TestSearXNGSearchProvider(unittest.TestCase):
         self.assertEqual(resp.results[0].snippet, "Desc text")
 
     @patch("src.search_service._get_with_retry")
+    def test_self_hosted_extracts_relative_date_from_snippet_when_field_missing(self, mock_get):
+        mock_get.return_value = self._response(
+            json_payload={
+                "results": [
+                    {
+                        "title": "贵州茅台最新动态",
+                        "url": "https://example.com/news",
+                        "content": "7 hours ago · 贵州茅台披露分红新进展",
+                    }
+                ]
+            }
+        )
+
+        provider = self._create_provider(["https://searx.example.org"])
+        resp = provider.search("query", max_results=5)
+
+        self.assertTrue(resp.success)
+        self.assertEqual(resp.results[0].published_date, "7 hours ago")
+
+    @patch("src.search_service._get_with_retry")
     def test_self_hosted_403_returns_specific_error(self, mock_get):
         mock_get.return_value = self._response(
             status_code=403,
