@@ -869,22 +869,22 @@ const ChatPage: React.FC = () => {
   return (
     <div
       data-testid="chat-workspace"
-      className="flex h-[calc(100vh-5rem)] w-full min-w-0 gap-4 overflow-hidden sm:h-[calc(100vh-5.5rem)] lg:h-[calc(100vh-2rem)]"
+      className="chat-page-workspace flex w-full min-w-0 gap-4 overflow-hidden"
     >
       {/* Desktop sidebar */}
-      <div className="hidden h-full w-64 flex-shrink-0 flex-col overflow-hidden rounded-[1.25rem] border border-white/8 bg-card/82 shadow-soft-card md:flex">
+      <div className="chat-session-sidebar hidden h-full w-64 flex-shrink-0 flex-col overflow-hidden rounded-[1.25rem] border border-white/8 bg-card/82 shadow-soft-card md:flex">
         {sidebarContent}
       </div>
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 md:hidden"
+          className="chat-mobile-history-overlay fixed inset-0 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         >
           <div className="page-drawer-overlay absolute inset-0" />
           <div
-            className="absolute left-0 top-0 bottom-0 w-72 flex flex-col glass-card overflow-hidden border-r border-white/10 bg-card/90 shadow-2xl"
+            className="chat-mobile-history-drawer absolute bottom-0 left-0 top-0 flex w-72 flex-col overflow-hidden border-r border-white/10 bg-card/90 shadow-2xl glass-card"
             onClick={(e) => e.stopPropagation()}
           >
             {sidebarContent}
@@ -905,10 +905,10 @@ const ChatPage: React.FC = () => {
       />
 
       {/* Main chat area */}
-      <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="mb-4 flex-shrink-0 space-y-3">
-          <div className="flex items-start justify-between gap-4">
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+      <div className="chat-page-main flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="chat-page-header mb-4 flex-shrink-0 space-y-3">
+          <div className="chat-page-header-row flex items-start justify-between gap-4">
+            <h1 className="chat-page-title flex min-w-0 items-center gap-2 text-2xl font-bold text-foreground">
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="md:hidden p-1.5 -ml-1 rounded-lg hover:bg-hover transition-colors text-secondary-text hover:text-foreground"
@@ -944,7 +944,7 @@ const ChatPage: React.FC = () => {
               问股
             </h1>
             {messages.length > 0 && (
-              <div className="flex flex-shrink-0 flex-wrap items-center justify-end gap-2">
+              <div className="chat-page-actions flex flex-shrink-0 flex-wrap items-center justify-end gap-2">
                 <Tooltip content="导出会话为 Markdown 文件">
                   <span className="inline-flex">
                     <Button
@@ -966,7 +966,7 @@ const ChatPage: React.FC = () => {
                           d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                         />
                       </svg>
-                      导出会话
+                      <span className="chat-action-label">导出会话</span>
                     </Button>
                   </span>
                 </Tooltip>
@@ -1031,7 +1031,7 @@ const ChatPage: React.FC = () => {
                           />
                         </svg>
                       )}
-                      发送
+                      <span className="chat-action-label">发送</span>
                     </Button>
                   </span>
                 </Tooltip>
@@ -1051,13 +1051,13 @@ const ChatPage: React.FC = () => {
           ) : null}
         </header>
 
-        <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden border border-white/6 bg-card/78 glass-card">
+        <div className="chat-page-panel relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden border border-white/6 bg-card/78 glass-card">
           {/* Messages */}
           <ScrollArea
             className="relative z-10 flex-1"
             viewportRef={messagesViewportRef}
             onScroll={handleMessagesScroll}
-            viewportClassName="space-y-6 p-4 md:p-6"
+            viewportClassName="space-y-4 p-3 sm:space-y-6 sm:p-4 md:p-6"
             testId="chat-message-scroll"
           >
             {messages.length === 0 && !loading ? (
@@ -1065,7 +1065,7 @@ const ChatPage: React.FC = () => {
                 <EmptyState
                   title="开始问股"
                   description="输入「分析 600519」或「茅台现在能买吗」，AI 将调用实时数据工具为您生成决策报告。"
-                  className="max-w-2xl border-dashed bg-card/55"
+                  className="chat-empty-state max-w-2xl border-dashed bg-card/55"
                   icon={(
                     <svg
                       className="h-8 w-8"
@@ -1102,11 +1102,11 @@ const ChatPage: React.FC = () => {
                 return (
                 <div
                   key={msg.id}
-                  className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                  className={`chat-message-row flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
                 >
                   <div
                     className={cn(
-                      'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold shadow-sm transition-all',
+                      'chat-message-avatar flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold shadow-sm transition-all',
                       msg.role === 'user' ? 'chat-avatar-user' : 'chat-avatar-ai'
                     )}
                   >
@@ -1114,7 +1114,7 @@ const ChatPage: React.FC = () => {
                   </div>
                   <div
                     className={cn(
-                      'group/message min-w-0 w-fit max-w-[min(100%,48rem)] overflow-hidden px-5 py-3.5 transition-colors',
+                      'chat-message-bubble group/message min-w-0 w-fit max-w-[min(100%,48rem)] overflow-hidden px-5 py-3.5 transition-colors',
                       msg.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'
                     )}
                   >
@@ -1188,11 +1188,11 @@ const ChatPage: React.FC = () => {
             )}
 
             {loading && (
-              <div className="flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-elevated text-foreground flex items-center justify-center flex-shrink-0 text-xs font-bold">
+              <div className="chat-loading-row flex gap-4">
+                <div className="chat-message-avatar flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-elevated text-xs font-bold text-foreground">
                   AI
                 </div>
-                <div className="min-w-[200px] max-w-[min(100%,48rem)] overflow-hidden rounded-2xl rounded-tl-sm border border-white/6 bg-card/72 px-5 py-4">
+                <div className="chat-loading-bubble min-w-[200px] max-w-[min(100%,48rem)] overflow-hidden rounded-2xl rounded-tl-sm border border-white/6 bg-card/72 px-5 py-4">
                   <div className="flex items-center gap-2.5 text-sm text-secondary-text">
                     <div className="relative w-4 h-4 flex-shrink-0">
                       <div className="absolute inset-0 rounded-full border-2 border-cyan/20" />
@@ -1210,7 +1210,7 @@ const ChatPage: React.FC = () => {
           </ScrollArea>
 
           {showJumpToBottom && (
-            <div className="pointer-events-none absolute bottom-[5.75rem] right-4 z-20 md:bottom-24 md:right-6">
+            <div className="chat-jump-to-bottom pointer-events-none absolute bottom-[5.75rem] right-4 z-20 md:bottom-24 md:right-6">
               <button
                 type="button"
                 className="pointer-events-auto chat-copy-btn shadow-soft-card"
@@ -1239,8 +1239,8 @@ const ChatPage: React.FC = () => {
           )}
 
           {/* Input area */}
-          <div className="border-t border-white/6 bg-card/88 p-4 md:p-6 relative z-20">
-            <div className="space-y-3">
+          <div className="chat-input-area relative z-20 border-t border-white/6 bg-card/88 p-4 md:p-6">
+            <div className="chat-input-area-inner space-y-3">
               {chatError ? <ApiErrorAlert error={chatError} /> : null}
               {isFollowUpContextLoading ? (
                 <InlineAlert
@@ -1250,7 +1250,7 @@ const ChatPage: React.FC = () => {
                   className="rounded-xl px-3 py-2 text-xs shadow-none"
                 />
               ) : null}
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/6 bg-surface/25 px-3 py-2">
+              <div className="chat-context-compression flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/6 bg-surface/25 px-3 py-2">
                 <label
                   className={cn(
                     'inline-flex items-center gap-2 text-sm',
@@ -1313,7 +1313,7 @@ const ChatPage: React.FC = () => {
                     data-testid="chat-skill-picker-panel"
                     className={cn(
                       mobileSkillPickerOpen ? 'flex' : 'hidden',
-                      'max-h-40 flex-wrap items-start gap-x-5 gap-y-2 overflow-y-auto rounded-xl border border-white/6 bg-surface/25 px-3 py-2 md:flex md:max-h-none md:overflow-visible md:border-0 md:bg-transparent md:p-0',
+                      'chat-skill-picker-panel max-h-40 flex-wrap items-start gap-x-5 gap-y-2 overflow-y-auto rounded-xl border border-white/6 bg-surface/25 px-3 py-2 md:flex md:max-h-none md:overflow-visible md:border-0 md:bg-transparent md:p-0',
                     )}
                   >
                     <span className="text-xs text-muted-text font-medium uppercase tracking-wider flex-shrink-0 mt-1">
@@ -1372,7 +1372,7 @@ const ChatPage: React.FC = () => {
               )}
 
             {activeStockCode && (
-              <div className="flex items-center gap-2">
+              <div className="chat-active-stock-row flex items-center gap-2">
                 <span className="text-xs text-muted-text font-mono">{activeStockCode}</span>
                 <Button
                   variant="secondary"
@@ -1384,20 +1384,20 @@ const ChatPage: React.FC = () => {
                   {stockInWatchlist(activeStockCode) ? '从自选删除' : '加入自选'}
                 </Button>
                 {watchlistMessage && (
-                  <span className="text-[11px] text-secondary-text animate-in fade-in">{watchlistMessage}</span>
+                  <span className="chat-active-stock-message min-w-0 truncate text-[11px] text-secondary-text animate-in fade-in">{watchlistMessage}</span>
                 )}
               </div>
             )}
 
-              <div className="flex items-end gap-3">
+              <div className="chat-input-row flex items-end gap-3">
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="例如：分析 600519 / 茅台现在适合买入吗？ (Enter 发送, Shift+Enter 换行)"
+                  placeholder="例如：分析 600519"
                   disabled={loading}
                   rows={1}
-                  className="input-surface input-focus-glow flex-1 min-h-[44px] max-h-[200px] rounded-xl border bg-transparent px-4 py-2.5 text-sm transition-all focus:outline-none resize-none disabled:cursor-not-allowed disabled:opacity-60"
+                  className="chat-message-input input-surface input-focus-glow flex-1 min-h-[44px] max-h-[200px] rounded-xl border bg-transparent px-4 py-2.5 text-sm transition-all focus:outline-none resize-none disabled:cursor-not-allowed disabled:opacity-60"
                   style={{ height: 'auto' }}
                   onInput={(e) => {
                     const t = e.target as HTMLTextAreaElement;
@@ -1410,7 +1410,7 @@ const ChatPage: React.FC = () => {
                   onClick={() => handleSend()}
                   disabled={!input.trim() || loading}
                   isLoading={loading}
-                  className="btn-primary flex-shrink-0"
+                  className="chat-send-button btn-primary flex-shrink-0"
                 >
                   发送
                 </Button>

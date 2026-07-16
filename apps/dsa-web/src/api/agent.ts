@@ -34,6 +34,30 @@ export interface SkillsResponse {
   default_skill_id: string;
 }
 
+const isMobileBrowser = (): boolean => {
+  if (typeof navigator === 'undefined') {
+    return false;
+  }
+
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+};
+
+const toBufferedStreamResponse = (data: ChatResponse): Response => new Response(
+  `data: ${JSON.stringify({
+    type: 'done',
+    success: data.success,
+    content: data.content,
+    error: data.error,
+  })}\n\n`,
+  {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+    },
+  },
+);
+
 export interface ChatSessionItem {
   session_id: string;
   title: string;
@@ -50,9 +74,10 @@ export interface ChatSessionMessage {
 }
 
 export const agentApi = {
-  async chat(payload: ChatRequest): Promise<ChatResponse> {
+  async chat(payload: ChatRequest, options?: ChatStreamOptions): Promise<ChatResponse> {
     const response = await apiClient.post<ChatResponse>('/api/v1/agent/chat', payload, {
-      timeout: 120000,
+      timeout: 300000,
+      ...(options?.signal ? { signal: options.signal } : {}),
     });
     return response.data;
   },
@@ -87,18 +112,33 @@ export const agentApi = {
     payload: ChatStreamRequest,
     options?: ChatStreamOptions,
   ): Promise<Response> {
+    // Mobile WebViews and some Safari versions do not reliably expose a
+    // long-lived POST response body. Use the buffered endpoint there and
+    // adapt its final result to the same SSE shape consumed by the store.
+    if (isMobileBrowser()) {
+      return toBufferedStreamResponse(await this.chat(payload, options));
+    }
+
     const base = API_BASE_URL || '';
     const url = `${base}/api/v1/agent/chat/stream`;
     try {
       const response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          Accept: 'text/event-stream',
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(payload),
         credentials: 'include',
         signal: options?.signal,
       });
 
       if (response.ok) {
+        // A proxy can return a successful response without a readable body;
+        // fall back to the buffered endpoint instead of crashing on getReader.
+        if (!response.body) {
+          return toBufferedStreamResponse(await this.chat(payload, options));
+        }
         return response;
       }
 
