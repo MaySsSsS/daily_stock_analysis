@@ -47,7 +47,10 @@ RUN groupadd -g 1000 dsa && \
 COPY requirements.txt .
 
 # 安装 Python 依赖（国内云服务器默认 PyPI 可能较慢，使用腾讯云镜像并放宽下载超时）
-RUN pip install --no-cache-dir --timeout 120 --retries 5 -i https://mirrors.tencent.com/pypi/simple -r requirements.txt
+RUN pip install --no-cache-dir --timeout 120 --retries 5 \
+    -i https://mirrors.tencent.com/pypi/simple \
+    --extra-index-url https://pypi.org/simple \
+    -r requirements.txt
 
 # 复制应用代码
 COPY *.py ./

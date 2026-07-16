@@ -30,7 +30,8 @@ def test_dockerfile_bundles_default_alphasift_adapter() -> None:
 
     assert "git \\" in dockerfile
     assert "alphasift @ https://codeload.github.com/ZhuLinsen/alphasift/tar.gz/377049857cc04175dc3cca62121ee41adec6cdb8" in requirements
-    assert "pip install --no-cache-dir --timeout 120 --retries 5 -i https://mirrors.tencent.com/pypi/simple -r requirements.txt" in dockerfile
+    assert "-i https://mirrors.tencent.com/pypi/simple" in dockerfile
+    assert "--extra-index-url https://pypi.org/simple" in dockerfile
     assert "import alphasift.dsa_adapter" in dockerfile
 
 
