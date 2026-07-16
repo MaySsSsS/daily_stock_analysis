@@ -300,10 +300,12 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        # 支持 WebSocket（Agent 对话页面需要）
+        # 支持问股与任务进度的 SSE 长连接
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
+        proxy_set_header Connection "";
+        proxy_buffering off;
+        proxy_read_timeout 360s;
+        proxy_send_timeout 360s;
     }
 }
 ```

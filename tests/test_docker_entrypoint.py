@@ -106,6 +106,14 @@ def test_nginx_uses_docker_dns_for_server_upstream() -> None:
     assert "proxy_pass $upstream;" in nginx_conf
 
 
+def test_nginx_supports_long_lived_streaming_responses() -> None:
+    nginx_conf = (REPO_ROOT / "docker" / "nginx.conf").read_text(encoding="utf-8")
+
+    assert "proxy_buffering off;" in nginx_conf
+    assert "proxy_read_timeout 360s;" in nginx_conf
+    assert "proxy_send_timeout 360s;" in nginx_conf
+
+
 def test_docker_guides_do_not_recommend_single_file_env_bind_mount() -> None:
     forbidden_mount_patterns = [
         r"\$\(pwd\)/\.env:/app/\.env",

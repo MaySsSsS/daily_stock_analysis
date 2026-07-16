@@ -40,6 +40,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+CHAT_STREAM_HEARTBEAT_INTERVAL_SECONDS = 25.0
+CHAT_STREAM_IDLE_TIMEOUT_SECONDS = 300.0
+
 class ChatRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -434,13 +437,25 @@ async def agent_chat_stream(request: ChatRequest):
     async def event_generator():
         # Start executor in a thread so we don't block the event loop
         fut = loop.run_in_executor(None, run_sync)
+        idle_seconds = 0.0
         try:
             while True:
+                wait_seconds = min(
+                    CHAT_STREAM_HEARTBEAT_INTERVAL_SECONDS,
+                    CHAT_STREAM_IDLE_TIMEOUT_SECONDS - idle_seconds,
+                )
                 try:
-                    event = await asyncio.wait_for(queue.get(), timeout=300.0)
+                    event = await asyncio.wait_for(queue.get(), timeout=wait_seconds)
                 except asyncio.TimeoutError:
-                    yield "data: " + json.dumps({"type": "error", "message": "分析超时"}, ensure_ascii=False) + "\n\n"
-                    break
+                    idle_seconds += wait_seconds
+                    if idle_seconds >= CHAT_STREAM_IDLE_TIMEOUT_SECONDS:
+                        yield "data: " + json.dumps({"type": "error", "message": "分析超时"}, ensure_ascii=False) + "\n\n"
+                        break
+                    # SSE comments keep reverse proxies and browsers connected
+                    # without surfacing a user-visible progress event.
+                    yield ": heartbeat\n\n"
+                    continue
+                idle_seconds = 0.0
                 yield "data: " + json.dumps(event, ensure_ascii=False) + "\n\n"
                 if event.get("type") in ("done", "error"):
                     break

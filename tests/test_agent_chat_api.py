@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Agent chat history API regressions."""
 
+import time
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -94,6 +95,39 @@ def test_agent_chat_forwards_stock_context_to_executor(tmp_path: Path) -> None:
     assert kwargs["session_id"] == "s1"
     assert kwargs["context"]["stock_code"] == "600519"
     assert kwargs["context"]["stock_name"] == "匿名标的"
+
+
+def test_agent_chat_stream_sends_heartbeat_while_executor_is_quiet(tmp_path: Path) -> None:
+    executor = MagicMock()
+
+    def delayed_chat(**_kwargs):
+        time.sleep(0.05)
+        return SimpleNamespace(
+            success=True,
+            content="ok",
+            error=None,
+            total_steps=1,
+        )
+
+    executor.chat.side_effect = delayed_chat
+    config = SimpleNamespace(is_agent_available=lambda: True)
+
+    with patch("api.middlewares.auth.is_auth_enabled", return_value=False):
+        with patch("api.v1.endpoints.agent.get_config", return_value=config):
+            with patch("api.v1.endpoints.agent._build_executor", return_value=executor):
+                with patch(
+                    "api.v1.endpoints.agent.CHAT_STREAM_HEARTBEAT_INTERVAL_SECONDS",
+                    0.01,
+                ):
+                    client = TestClient(create_app(static_dir=tmp_path / "static"))
+                    response = client.post(
+                        "/api/v1/agent/chat/stream",
+                        json={"message": "quiet request", "session_id": "heartbeat"},
+                    )
+
+    assert response.status_code == 200
+    assert ": heartbeat\n\n" in response.text
+    assert '"type": "done"' in response.text
 
 
 def test_agent_chat_stream_forwards_stock_context_to_executor(tmp_path: Path) -> None:
