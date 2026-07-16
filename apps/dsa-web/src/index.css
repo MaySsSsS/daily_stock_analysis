@@ -2604,6 +2604,11 @@ textarea {
 }
 
 /* Mobile chat layout and stream-friendly input sizing. */
+.home-page-workspace {
+  min-height: 0;
+  height: calc(100vh - 5rem);
+}
+
 .chat-page-workspace {
   min-height: 0;
   height: calc(100vh - 5rem);
@@ -2628,17 +2633,23 @@ textarea {
 }
 
 @supports (height: 100dvh) {
+  .home-page-workspace,
   .chat-page-workspace {
     height: calc(100dvh - 5rem);
   }
 }
 
 @media (min-width: 640px) and (max-width: 1023px) {
+  .home-page-workspace {
+    height: calc(100vh - 5.5rem);
+  }
+
   .chat-page-workspace {
     height: calc(100vh - 5.5rem);
   }
 
   @supports (height: 100dvh) {
+    .home-page-workspace,
     .chat-page-workspace {
       height: calc(100dvh - 5.5rem);
     }
@@ -2646,11 +2657,16 @@ textarea {
 }
 
 @media (min-width: 1024px) {
+  .home-page-workspace {
+    height: calc(100vh - 2rem);
+  }
+
   .chat-page-workspace {
     height: calc(100vh - 2rem);
   }
 
   @supports (height: 100dvh) {
+    .home-page-workspace,
     .chat-page-workspace {
       height: calc(100dvh - 2rem);
     }

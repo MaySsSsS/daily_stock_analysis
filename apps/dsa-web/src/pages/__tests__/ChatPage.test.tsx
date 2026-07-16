@@ -204,7 +204,10 @@ describe('ChatPage', () => {
 
     expect(await screen.findByTestId('chat-workspace')).toBeInTheDocument();
     expect(screen.getByTestId('chat-session-list-scroll')).toBeInTheDocument();
-    expect(screen.getByTestId('chat-message-scroll')).toBeInTheDocument();
+    const messageScroll = screen.getByTestId('chat-message-scroll');
+    expect(messageScroll).toBeInTheDocument();
+    expect(messageScroll.className).toContain('pb-0');
+    expect(messageScroll.lastElementChild).toHaveClass('!mt-0', 'h-0');
     expect(mockLoadInitialSession).toHaveBeenCalled();
     expect(mockClearCompletionBadge).toHaveBeenCalled();
   });

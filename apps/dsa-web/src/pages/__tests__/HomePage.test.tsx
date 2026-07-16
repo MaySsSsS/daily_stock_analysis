@@ -229,11 +229,15 @@ describe('HomePage', () => {
 
     const dashboard = await screen.findByTestId('home-dashboard');
     expect(dashboard).toBeInTheDocument();
+    expect(dashboard.className).toContain('home-page-workspace');
     expect(dashboard.className).toContain('h-[calc(100vh-5rem)]');
     expect(dashboard.className).toContain('lg:h-[calc(100vh-2rem)]');
     expect(dashboard.firstElementChild?.className).toContain('min-h-0');
     expect(dashboard.querySelector('.flex-1.flex.min-h-0.overflow-hidden')).toBeTruthy();
-    expect(screen.getByTestId('home-dashboard-scroll')).toBeInTheDocument();
+    const dashboardScroll = screen.getByTestId('home-dashboard-scroll');
+    expect(dashboardScroll).toBeInTheDocument();
+    expect(dashboardScroll.className).toContain('pb-0');
+    expect(dashboardScroll.className).toContain('md:pb-4');
     expect(screen.getByPlaceholderText('输入股票代码或名称，如 600519、贵州茅台、AAPL')).toBeInTheDocument();
     expect(await screen.findByText('趋势维持强势')).toBeInTheDocument();
     expect(

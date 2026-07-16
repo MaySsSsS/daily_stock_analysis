@@ -58,7 +58,7 @@ export const ReportSummary: React.FC<ReportSummaryProps> = ({
   }
 
   return (
-    <div className="space-y-5 pb-8 animate-fade-in">
+    <div className="space-y-5 pb-0 sm:pb-8 animate-fade-in">
       {/* 概览区（首屏） */}
       <ReportOverview
         meta={meta}

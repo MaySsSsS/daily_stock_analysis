@@ -1057,7 +1057,7 @@ const ChatPage: React.FC = () => {
             className="relative z-10 flex-1"
             viewportRef={messagesViewportRef}
             onScroll={handleMessagesScroll}
-            viewportClassName="space-y-4 p-3 sm:space-y-6 sm:p-4 md:p-6"
+            viewportClassName="space-y-4 px-3 pt-3 pb-0 sm:space-y-6 sm:p-4 md:p-6"
             testId="chat-message-scroll"
           >
             {messages.length === 0 && !loading ? (
@@ -1206,7 +1206,7 @@ const ChatPage: React.FC = () => {
               </div>
             )}
 
-            <div ref={messagesEndRef} />
+            <div ref={messagesEndRef} className="!mt-0 h-0" />
           </ScrollArea>
 
           {showJumpToBottom && (

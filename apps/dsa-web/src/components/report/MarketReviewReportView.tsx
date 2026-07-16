@@ -369,7 +369,7 @@ export const MarketReviewReportView: React.FC<MarketReviewReportViewProps> = ({
   ], [marketReviewText, summary, text.marketSentiment]);
 
   return (
-    <div className={`animate-fade-in space-y-4 pb-8 ${className}`}>
+    <div className={`animate-fade-in space-y-4 pb-0 sm:pb-8 ${className}`}>
       <Card variant="gradient" padding="md" className="home-report-hero text-left">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
