@@ -42,7 +42,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [修复] Docker 镜像预置 efinance 缓存目录（efinance/data）属主给非 root 运行用户 dsa，修复 A 股 efinance 数据源因写 search-cache.json 触发 PermissionError 而每次抓取失败降级的问题。
 - [修复] Docker 部署中 Web 设置页保存自定义 Webhook 模板时自动转义 `$content_json` 等应用占位符，并在运行时还原，避免 Compose 重新部署将其展开为空。
 - [修复] 问股 SSE 在长时间模型生成阶段发送心跳，并延长 Docker Nginx 流式代理超时，避免云端问股连接在静默 60 秒后被切断并误报 Network Error。
-- [修复] Docker 构建保留腾讯 PyPI 镜像并增加官方 PyPI 缺包兜底，避免镜像未同步新版依赖时阻断云服务器重建。
 
 ## [3.23.0] - 2026-06-20
 
