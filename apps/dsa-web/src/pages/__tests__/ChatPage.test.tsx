@@ -214,6 +214,23 @@ describe('ChatPage', () => {
     expect(mockClearCompletionBadge).toHaveBeenCalled();
   });
 
+  it('prevents page-level touch movement while preserving chat viewport gestures', async () => {
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <ChatPage />
+      </MemoryRouter>
+    );
+
+    const messageScroll = await screen.findByTestId('chat-message-scroll');
+    const backgroundTouch = new Event('touchmove', { bubbles: true, cancelable: true });
+    document.dispatchEvent(backgroundTouch);
+    expect(backgroundTouch.defaultPrevented).toBe(true);
+
+    const messageTouch = new Event('touchmove', { bubbles: true, cancelable: true });
+    messageScroll.dispatchEvent(messageTouch);
+    expect(messageTouch.defaultPrevented).toBe(false);
+  });
+
   it('loads and saves the global context compression setting from the chat input area', async () => {
     render(
       <MemoryRouter initialEntries={['/chat']}>

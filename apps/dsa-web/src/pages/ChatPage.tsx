@@ -222,6 +222,29 @@ const ChatPage: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleBackgroundTouchMove = (event: TouchEvent) => {
+      const target = event.target;
+      if (
+        target instanceof Element
+        && target.closest(
+          '[data-testid="chat-message-scroll"], [data-testid="chat-session-list-scroll"], .chat-mobile-history-drawer'
+        )
+      ) {
+        return;
+      }
+      event.preventDefault();
+    };
+
+    document.addEventListener('touchmove', handleBackgroundTouchMove, {
+      capture: true,
+      passive: false,
+    });
+    return () => {
+      document.removeEventListener('touchmove', handleBackgroundTouchMove, { capture: true });
+    };
+  }, []);
+
   useEffect(() => () => {
     isMountedRef.current = false;
   }, []);
