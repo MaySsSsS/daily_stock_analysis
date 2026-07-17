@@ -105,6 +105,7 @@ describe('BacktestPage', () => {
 
     const filterInput = await screen.findByPlaceholderText('按股票代码筛选（留空表示全部）');
     const windowInput = screen.getByPlaceholderText('10');
+    expect(filterInput.closest('.backtest-page-workspace')).toBeInTheDocument();
 
     expect(filterInput).toHaveClass('input-surface');
     expect(filterInput).toHaveClass('input-focus-glow');

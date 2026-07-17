@@ -572,6 +572,12 @@
 
 /* ============ Base Styles ============ */
 @layer base {
+  html,
+  body,
+  #root {
+    overscroll-behavior-y: none;
+  }
+
   body {
     margin: 0;
     min-width: 320px;
@@ -2675,6 +2681,25 @@ textarea {
 }
 
 @media (max-width: 639px) {
+  .home-page-workspace,
+  .chat-page-workspace,
+  .backtest-page-workspace {
+    height: calc(100vh - 4.25rem);
+    min-height: 0;
+  }
+
+  @supports (height: 100dvh) {
+    .home-page-workspace,
+    .chat-page-workspace,
+    .backtest-page-workspace {
+      height: calc(100dvh - 4.25rem);
+    }
+  }
+
+  .backtest-page-workspace {
+    overflow: hidden;
+  }
+
   html.chat-page-scroll-lock,
   body.chat-page-scroll-lock {
     overflow: hidden;
