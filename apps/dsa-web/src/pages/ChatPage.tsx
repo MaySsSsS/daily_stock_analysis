@@ -212,6 +212,16 @@ const ChatPage: React.FC = () => {
     document.title = '问股 - DSA';
   }, []);
 
+  useEffect(() => {
+    document.documentElement.classList.add('chat-page-scroll-lock');
+    document.body.classList.add('chat-page-scroll-lock');
+
+    return () => {
+      document.documentElement.classList.remove('chat-page-scroll-lock');
+      document.body.classList.remove('chat-page-scroll-lock');
+    };
+  }, []);
+
   useEffect(() => () => {
     isMountedRef.current = false;
   }, []);

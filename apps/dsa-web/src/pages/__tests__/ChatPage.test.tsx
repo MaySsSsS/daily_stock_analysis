@@ -203,6 +203,8 @@ describe('ChatPage', () => {
     );
 
     expect(await screen.findByTestId('chat-workspace')).toBeInTheDocument();
+    expect(document.documentElement).toHaveClass('chat-page-scroll-lock');
+    expect(document.body).toHaveClass('chat-page-scroll-lock');
     expect(screen.getByTestId('chat-session-list-scroll')).toBeInTheDocument();
     const messageScroll = screen.getByTestId('chat-message-scroll');
     expect(messageScroll).toBeInTheDocument();

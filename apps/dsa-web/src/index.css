@@ -2612,6 +2612,7 @@ textarea {
 .chat-page-workspace {
   min-height: 0;
   height: calc(100vh - 5rem);
+  overscroll-behavior: none;
 }
 
 .chat-page-main,
@@ -2674,6 +2675,16 @@ textarea {
 }
 
 @media (max-width: 639px) {
+  html.chat-page-scroll-lock,
+  body.chat-page-scroll-lock {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  .chat-page-workspace [data-testid="chat-message-scroll"] {
+    overscroll-behavior: contain;
+  }
+
   .chat-page-workspace {
     gap: 0.75rem;
   }
